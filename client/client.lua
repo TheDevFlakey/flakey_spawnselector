@@ -1,5 +1,4 @@
 local cam = nil
-local lastLocationCoords = nil
 local function toggleNuiFrame(shouldShow)
     SetNuiFocus(shouldShow, shouldShow)
     SendReactMessage("setVisible", shouldShow)
@@ -23,7 +22,6 @@ RegisterNetEvent("flakey_spawnselector:openSpawnSelector", function()
         SetCamActive(cam, true)
         RenderScriptCams(true, false, 0, true, true)
     end
-    lastLocationCoords = GetEntityCoords(PlayerPedId())
 end)
 
 RegisterNUICallback("flakey_spawnselector:focusLocation", function(data, cb)
@@ -76,17 +74,57 @@ end)
 RegisterNUICallback("flakey_spawnselector:spawnPlayer", function(data, cb)
     local name = data.name
     local coords = data.coords
+
     if name and coords then
         local plyPed = PlayerPedId()
         FreezeEntityPosition(plyPed, false)
         SetEntityVisible(plyPed, true)
-        if name == "Last Location" then
-            SetEntityCoords(plyPed, lastLocationCoords.x, lastLocationCoords.y, lastLocationCoords.z, false, false, false, false)
+
+        -- Smooth camera zoom-in
+        if cam then
+            if name == "Last Location" then
+                TriggerServerEvent("flakeyCore:spawnLastLocation")
+            else
+                SetEntityCoords(plyPed, coords.x, coords.y, coords.z, false, false, false, false)
+            end
+            
+            local from = GetCamCoord(cam)
+            local plyCoords = GetEntityCoords(plyPed)
+            local to = vector3(plyCoords.x, plyCoords.y, plyCoords.z) -- Just above player height
+            local duration = 1000
+            local startTime = GetGameTimer()
+
+            CreateThread(function()
+                while true do
+                    local now = GetGameTimer()
+                    local alpha = math.min(1.0, (now - startTime) / duration)
+                    local x = from.x + (to.x - from.x) * alpha
+                    local y = from.y + (to.y - from.y) * alpha
+                    local z = from.z + (to.z - from.z) * alpha
+
+                    SetCamCoord(cam, x, y, z)
+                    PointCamAtCoord(cam, coords.x, coords.y, coords.z)
+
+                    if alpha >= 1.0 then
+                        -- Hide UI after zoom completes
+                        toggleNuiFrame(false)
+
+                        cb({ success = true, message = "Player spawned successfully." })
+                        break
+                    end
+                    Wait(0)
+                end
+            end)
         else
-            SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
+            -- Fallback if no camera exists
+            if name == "Last Location" then
+                TriggerServerEvent("flakeyCore:spawnLastLocation")
+            else
+                SetEntityCoords(plyPed, coords.x, coords.y, coords.z, false, false, false, false)
+            end
+            toggleNuiFrame(false)
+            cb({ success = true, message = "Player spawned successfully." })
         end
-        toggleNuiFrame(false)
-        cb({ success = true, message = "Player spawned successfully." })
     else
         cb({ success = false, message = "Invalid data provided." })
     end
