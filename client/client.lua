@@ -70,7 +70,6 @@ RegisterNUICallback("flakey_spawnselector:focusLocation", function(data, cb)
     cb({ status = "ok" })
 end)
 
-
 RegisterNUICallback("flakey_spawnselector:spawnPlayer", function(data, cb)
     local name = data.name
     local coords = data.coords
@@ -82,14 +81,20 @@ RegisterNUICallback("flakey_spawnselector:spawnPlayer", function(data, cb)
 
         -- Smooth camera zoom-in
         if cam then
+            local isLast = false
             if name == "Last Location" then
                 TriggerServerEvent("flakeyCore:spawnLastLocation")
+                Wait(500)
+                isLast = true
             else
                 SetEntityCoords(plyPed, coords.x, coords.y, coords.z, false, false, false, false)
             end
-            
-            local from = GetCamCoord(cam)
+
             local plyCoords = GetEntityCoords(plyPed)
+            local from = GetCamCoord(cam)
+            if isLast then
+               from = vector3(plyCoords.x, plyCoords.y, plyCoords.z + 250.0)
+            end
             local to = vector3(plyCoords.x, plyCoords.y, plyCoords.z) -- Just above player height
             local duration = 1000
             local startTime = GetGameTimer()
