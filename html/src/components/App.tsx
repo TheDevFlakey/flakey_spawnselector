@@ -2,21 +2,6 @@ import React, { useState } from "react";
 import { fetchNui } from "../utils/fetchNui";
 import { useNuiEvent } from "../hooks/useNuiEvent";
 
-const spawnLocations = [
-  { name: "Legion Square", coords: { x: 215.76, y: -810.12, z: 30.73 } },
-  { name: "Sandy Shores", coords: { x: 1852.12, y: 3689.4, z: 34.26 } },
-  { name: "Paleto Bay", coords: { x: -447.79, y: 6020.44, z: 31.72 } },
-  {
-    name: "Los Santos Airport",
-    coords: { x: -1034.56, y: -2738.12, z: 20.17 },
-  },
-  { name: "Vespucci Beach", coords: { x: -1602.34, y: -1070.45, z: 13.15 } },
-  { name: "Downtown Vinewood", coords: { x: 110.12, y: 662.34, z: 207.12 } },
-  { name: "Mirror Park", coords: { x: 1120.45, y: -3150.67, z: -38.99 } },
-  { name: "Chumash", coords: { x: -316.45, y: 6230.12, z: 30.43 } },
-  { name: "Last Location", coords: { x: 0, y: 0, z: 0 } },
-];
-
 const ConfirmModal = ({
   message,
   onConfirm,
@@ -49,16 +34,21 @@ const ConfirmModal = ({
 
 const App: React.FC = () => {
   const [visible, setVisible] = useState(false);
+  const [spawnLocations, setSpawnLocations] = useState<any[]>([]);
   const [pendingSpawn, setPendingSpawn] = useState<{
     name: string;
     coords: { x: number; y: number; z: number };
   } | null>(null);
 
-  useNuiEvent("setVisible", (isVisible: boolean) => {
-    setVisible(isVisible);
-  });
+  useNuiEvent(
+    "setVisible",
+    ({ visible, locations }: { visible: boolean; locations: any }) => {
+      setVisible(visible);
+      setSpawnLocations(locations || []);
+    }
+  );
 
-  const requestSpawn = (location: (typeof spawnLocations)[0]) => {
+  const requestSpawn = (location: any) => {
     setPendingSpawn(location);
   };
 
