@@ -6,7 +6,6 @@ local spawnLocations = {
     { name = "Paleto Bay", coords = vector3(-447.12, 6018.45, 31.72) },
     { name = "Los Santos International Airport", coords = vector3(-1034.56, -2737.89, 20.17) },
     { name = "Vespucci Beach", coords = vector3(-1600.23, -1070.45, 13.15) },
-    { name = "Mount Chiliad", coords = vector3(-540.12, 5325.67, 74.23) }
 }
 
 local function toggleNuiFrame(shouldShow)
@@ -35,6 +34,10 @@ RegisterNetEvent("flakey_spawnselector:openSpawnSelector", function(pos)
         RenderScriptCams(true, false, 0, true, true)
     end
 end)
+
+local function easeInOutQuad(t)
+    return t < 0.5 and 2 * t * t or -1 + (4 - 2 * t) * t
+end
 
 RegisterNUICallback("flakey_spawnselector:focusLocation", function(data, cb)
     local coords = data.coords
@@ -65,7 +68,7 @@ RegisterNUICallback("flakey_spawnselector:focusLocation", function(data, cb)
         CreateThread(function()
             while true do
                 local now = GetGameTimer()
-                local alpha = math.min(1.0, (now - startTime) / duration)
+                local alpha = easeInOutQuad(math.min(1.0, (now - startTime) / duration))
                 local x = from.x + (to.x - from.x) * alpha
                 local y = from.y + (to.y - from.y) * alpha
                 local z = from.z + (to.z - from.z) * alpha
@@ -98,13 +101,13 @@ RegisterNUICallback("flakey_spawnselector:spawnPlayer", function(data, cb)
 
             local from = GetCamCoord(cam)
             local to = vector3(plyCoords.x, plyCoords.y, plyCoords.z + 2.0) -- Just above player height
-            local duration = 1000
+            local duration = 3000
             local startTime = GetGameTimer()
 
             CreateThread(function()
                 while true do
                     local now = GetGameTimer()
-                    local alpha = math.min(1.0, (now - startTime) / duration)
+                    local alpha = easeInOutQuad(math.min(1.0, (now - startTime) / duration))
                     local x = from.x + (to.x - from.x) * alpha
                     local y = from.y + (to.y - from.y) * alpha
                     local z = from.z + (to.z - from.z) * alpha
